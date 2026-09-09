@@ -1,7 +1,7 @@
 import pandas as pd
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.model_selection import train_test_split
-
+from sklearn.metrics import mean_absolute_error, r2_score
 #read the file from the provided data(converted to a csv file for convenience)
 data = pd.read_csv("Dataset.csv")
 
@@ -21,3 +21,11 @@ model.fit(train_x, train_y)
 
 #Create the predictions
 predictions = model.predict(val_x)
+
+#Mean Absolute Error, metric 1
+mae = mean_absolute_error(val_y, predictions)
+print("Mean Absolute Error: ", mae)
+
+#r2, metric 2
+r2 = r2_score(val_y, predictions)
+print("R2 score: ", r2)
