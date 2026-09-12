@@ -1,5 +1,7 @@
 import pandas as pd
 from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, r2_score
 #read the file from the provided data(converted to a csv file for convenience)
@@ -57,7 +59,6 @@ def regularize_tree_depth(train_x, val_x, train_y, val_y, maxnodes):
             bestdepth = depth
             upperbound = upperbound + 5
         depth = depth + 1
-    print(f"Depth: {bestdepth}")
     return bestdepth
 
 #Function that takes training data to determine the best min
@@ -73,7 +74,6 @@ def regularize_min_samples(train_x, val_x, train_y, val_y, maxnodes, maxdepth):
             bestmin = minsamples
             upperbound = upperbound + 5
         minsamples = minsamples + 1
-    print(f"Min_samples: {bestmin}")
     return bestmin
 
 data = pd.read_csv("Dataset.csv")
@@ -104,18 +104,36 @@ r2 = r2_score(val_y, predictions)
 print("Unoptimized R2 score: ", r2)
 
 
-
+#Use the above optimization and regularization methods to find good parameters
 optimized_x = data[optimize_feature_selection(x, y)]
 optimized_train_x, optimized_val_x, optimized_train_y, optimized_val_y = train_test_split(optimized_x, y, random_state=1)
 optimized_max_leaf_nodes = max_leaf_node_optimization(optimized_train_x, optimized_val_x, optimized_train_y, optimized_val_y)
 regularized_max_depth=regularize_tree_depth(optimized_train_x, optimized_val_x, optimized_train_y, optimized_val_y, optimized_max_leaf_nodes)
 regularized_min_samples_leaf=regularize_min_samples(optimized_train_x, optimized_val_x, optimized_train_y, optimized_val_y, optimized_max_leaf_nodes, regularized_max_depth)
-optimized_model = DecisionTreeRegressor(max_leaf_nodes=optimized_max_leaf_nodes, 
+
+#Create a DecisionTree with the optimized and regularized parameters
+optimized_tree = DecisionTreeRegressor(max_leaf_nodes=optimized_max_leaf_nodes, 
                                         max_depth=regularized_max_depth,
                                         min_samples_leaf=regularized_min_samples_leaf, 
                                         random_state=1)
-optimized_model.fit(optimized_train_x, optimized_train_y)
-optimized_predictions = optimized_model.predict(optimized_val_x)
-print(f"Optimized MAE: {mean_absolute_error(optimized_val_y, optimized_predictions)}")
-print(f"Optimized R2 score: {r2_score(optimized_val_y, optimized_predictions)}")
+optimized_tree.fit(optimized_train_x, optimized_train_y)
+optimized_tree_predictions = optimized_tree.predict(optimized_val_x)
+print()
+print(f"Optimized Decision Tree MAE: {mean_absolute_error(optimized_val_y, optimized_tree_predictions)}")
+print(f"Optimized Decision Tree R2 score: {r2_score(optimized_val_y, optimized_tree_predictions)}")
 
+#Create a random forest model as ensemble 1
+random_forest = RandomForestRegressor(random_state=1)
+random_forest.fit(optimized_train_x, optimized_train_y)
+random_forest_predictions = random_forest.predict(optimized_val_x)
+print()
+print(f"Random Forest MAE: {mean_absolute_error(optimized_val_y, random_forest_predictions)}")
+print(f"Random Forest R2 score: {r2_score(optimized_val_y, random_forest_predictions)}")
+
+#Create a gradient boosting model as ensemble 2
+gradient_boost = GradientBoostingRegressor(random_state=1)
+gradient_boost.fit(optimized_train_x, optimized_train_y)
+gradient_boost_predictions = gradient_boost.predict(optimized_val_x)
+print()
+print(f"Gradient Boosting MAE: {mean_absolute_error(optimized_val_y, gradient_boost_predictions)}")
+print(f"Gradient Boosting R2 score: {r2_score(optimized_val_y, gradient_boost_predictions)}")
