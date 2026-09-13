@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, r2_score
 #read the file from the provided data(converted to a csv file for convenience)
 
-#Function that takes a maxnode count and returns the mae for that maxnode
+#Function that takes a parameter and returns the mae for that parameter
 def get_mae(train_x, val_x, train_y, val_y, maxnodes=None, maxdepth=None, minsamplesleaf=1):
     model = DecisionTreeRegressor(max_leaf_nodes=maxnodes, max_depth=maxdepth, min_samples_leaf=minsamplesleaf, random_state=1)
     model.fit(train_x, train_y)
@@ -76,6 +76,12 @@ def regularize_min_samples(train_x, val_x, train_y, val_y, maxnodes, maxdepth):
         minsamples = minsamples + 1
     return bestmin
 
+#Function for evaluating models
+def evaluate(val_y, predictions, name):
+    print()
+    print(f"{name} MAE: {mean_absolute_error(val_y, predictions)}")
+    print(f"{name} R2 score: {r2_score(val_y, predictions)}")
+
 data = pd.read_csv("Dataset.csv")
 
 #Target variable will be the precipitation probability as I will attempt to create a model that takes features and determines the chance of rain
@@ -95,14 +101,8 @@ model.fit(train_x, train_y)
 #Create the predictions
 predictions = model.predict(val_x)
 
-#Mean Absolute Error, metric 1
-mae = mean_absolute_error(val_y, predictions)
-print("Unoptimized Mean Absolute Error: ", mae)
-
-#r2, metric 2
-r2 = r2_score(val_y, predictions)
-print("Unoptimized R2 score: ", r2)
-
+#
+evaluate(val_y, predictions, "Unoptimized Decision Tree")
 
 #Use the above optimization and regularization methods to find good parameters
 optimized_x = data[optimize_feature_selection(x, y)]
@@ -118,22 +118,16 @@ optimized_tree = DecisionTreeRegressor(max_leaf_nodes=optimized_max_leaf_nodes,
                                         random_state=1)
 optimized_tree.fit(optimized_train_x, optimized_train_y)
 optimized_tree_predictions = optimized_tree.predict(optimized_val_x)
-print()
-print(f"Optimized Decision Tree MAE: {mean_absolute_error(optimized_val_y, optimized_tree_predictions)}")
-print(f"Optimized Decision Tree R2 score: {r2_score(optimized_val_y, optimized_tree_predictions)}")
+evaluate(optimized_val_y, optimized_tree_predictions, "Optimized Decision Tree")
 
 #Create a random forest model as ensemble 1
 random_forest = RandomForestRegressor(random_state=1)
 random_forest.fit(optimized_train_x, optimized_train_y)
 random_forest_predictions = random_forest.predict(optimized_val_x)
-print()
-print(f"Random Forest MAE: {mean_absolute_error(optimized_val_y, random_forest_predictions)}")
-print(f"Random Forest R2 score: {r2_score(optimized_val_y, random_forest_predictions)}")
+evaluate(optimized_val_y, random_forest_predictions, "Random Forest")
 
 #Create a gradient boosting model as ensemble 2
 gradient_boost = GradientBoostingRegressor(random_state=1)
 gradient_boost.fit(optimized_train_x, optimized_train_y)
 gradient_boost_predictions = gradient_boost.predict(optimized_val_x)
-print()
-print(f"Gradient Boosting MAE: {mean_absolute_error(optimized_val_y, gradient_boost_predictions)}")
-print(f"Gradient Boosting R2 score: {r2_score(optimized_val_y, gradient_boost_predictions)}")
+evaluate(optimized_val_y, gradient_boost_predictions, "Gradient Boosting")
