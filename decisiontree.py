@@ -126,8 +126,13 @@ random_forest.fit(optimized_train_x, optimized_train_y)
 random_forest_predictions = random_forest.predict(optimized_val_x)
 evaluate(optimized_val_y, random_forest_predictions, "Random Forest")
 
-#Create a gradient boosting model as ensemble 2
+# #Create a gradient boosting model as ensemble 2
 gradient_boost = GradientBoostingRegressor(random_state=1)
 gradient_boost.fit(optimized_train_x, optimized_train_y)
 gradient_boost_predictions = gradient_boost.predict(optimized_val_x)
 evaluate(optimized_val_y, gradient_boost_predictions, "Gradient Boosting")
+
+print()
+print("Feature | Importance")
+for feature, importance in zip(optimized_x.columns, optimized_tree.feature_importances_):
+    print(f"{feature}, {round(importance * 100, 2)}%")
